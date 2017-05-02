@@ -103,9 +103,10 @@ Here's an example of my output for this step from the undistorted thresholded bi
 
 ####4. Describe how (and identify where in your code) you identified lane-line pixels and fit their positions with a polynomial?
 
-In line 250 of `term1_project4.py` the `process_image()` pipeline function calls the `map_out_lane_lines()` function. This function (line 82) takes a warped binary image, left and right Line class instances and detects left and right lane pixels to find the lane boundaries and fits a second order polynomial to each.  
-
-Then I did some other stuff and fit my lane lines with a 2nd order polynomial kinda like this:
+In line 250 of `term1_project4.py` the `process_image()` pipeline function calls the `map_out_lane_lines()` function. This function (line 82) takes a warped thresholded binary image, left and right `Line()` class instances and detects left and right lane pixels to find the lane boundaries and fits a second order polynomial to each.  
+For this I used the implementation of lesson 33 "Finding the Lines" which is taking a histogram along all the columns in the lower half of the image. With this histogram I am adding up the pixel values along each column in the image (line 94). In my thresholded binary image, pixels are either 0 or 1, so the two most prominent peaks in this histogram will be good indicators of the x-position of the base of the lane lines (lines 98 and 99). I can use that as a starting point for where to search for the lines (lines 106 and 107). From that point, I can use a sliding window, placed around the line centers, to find and follow the lines up to the top of the image (lines 114 through 136).  
+I refactored this basic implementation of lesson 33 a little to remove duplicate code. I also introduced the `Line()` class (line 276) of lesson 36 "Tips and Tricks for the Project" to know if a left or right lane line is already detected (line 92) and therefore to skip the sliding window step (lines 93 through 140) in the next image or video frame. Then you have a fit and you are guided to line 145. Here the left and right fits are set to  the `current_fit` attributes of the corresponding `Line()` class instances (lines 145 and 146), which in turn were set earlier to the fitted polynomials from the previous image/video frame (lines 158 and 161). So in this next frame of video you don't need to do a blind search again, but instead you can just search in a margin around the previous line position (line 147 and 148).      
+Here's an example of my output for this step from the warped thresholded binary image above to verify that the line pixels are identified (in blue and red) and a fit is overplotted (in green):
 
 ![alt text][image6]
 
@@ -145,6 +146,6 @@ Here's a [link to my video result project_video_output.mp4](./project_video_outp
 
 ####1. Briefly discuss any problems / issues you faced in your implementation of this project.  Where will your pipeline likely fail?  What could you do to make it more robust?
 
-Here I'll talk about the approach I took, what techniques I used, what worked and why, where the pipeline might fail and how I might improve it if I were going to pursue this project further.  
-
-GBE: assumed conversions in x and y from pixels space to meters
+- I did the conversion from pixels space to meters specific for this set of images/video frames (lines 208 and 209). The measurements could differ in other lane line images/videos.
+- I hard-coded the four points of a trapezoidal shape (line 63) when applying a perspective transform. These points could differ in other lane line images/videos.
+- When I found lane lines in the `map_out_lane_lines()` function (lines 156 and 159), I did not check that the detection makes sense. Like checking that they have similar curvature, checking that they are separated by approximately the right distance horizontally or checking that they are roughly parallel. I could use the `Line()` class to keep track of these things.
